@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Bell, Check, CheckCheck, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Bell, Check, CheckCheck, ChevronLeft, ChevronRight, ExternalLink, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import ErrorAlert from '../components/ErrorAlert.jsx';
 import LoadingState from '../components/LoadingState.jsx';
 import { adminService } from '../services/adminService';
@@ -184,7 +185,7 @@ function NotificationPanel({
                     <tr key={notification.id} className={notification.read ? '' : 'table-success'}>
                       <td>{notification.read ? 'Read' : 'Unread'}</td>
                       <td>
-                        <div className="fw-semibold">{notification.title}</div>
+                        <NotificationTarget notification={notification} onMarkAsRead={onMarkAsRead} />
                         <div className="small text-muted-eco">{notification.message}</div>
                       </td>
                       <td>{notification.username || 'System'}</td>
@@ -248,6 +249,29 @@ function NotificationPanel({
       )}
     </section>
   );
+}
+
+function NotificationTarget({ notification, onMarkAsRead }) {
+  const target = getNotificationTarget(notification);
+  if (!target) return <div className="fw-semibold">{notification.title}</div>;
+
+  return (
+    <Link
+      to={target}
+      className="inline-flex items-center gap-2 fw-semibold text-decoration-none"
+      onClick={() => !notification.read && onMarkAsRead(notification.id)}
+    >
+      {notification.title}
+      <ExternalLink className="h-3 w-3" aria-hidden="true" />
+    </Link>
+  );
+}
+
+function getNotificationTarget(notification) {
+  if (!notification.relatedEntityId) return null;
+  if (notification.relatedEntityType === 'POST') return `/posts/${notification.relatedEntityId}`;
+  if (notification.relatedEntityType === 'USER' || notification.relatedEntityType === 'CONTACT') return '/admin';
+  return null;
 }
 
 function formatNotificationDate(value) {

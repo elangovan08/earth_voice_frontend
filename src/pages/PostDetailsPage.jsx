@@ -1,6 +1,6 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { CalendarDays, Edit3, Share2, Tag, UserRound } from 'lucide-react';
+import { CalendarDays, Edit3, Share2, Tag, Trash2, UserRound } from 'lucide-react';
 import CommentSection from '../components/CommentSection.jsx';
 import ErrorAlert from '../components/ErrorAlert.jsx';
 import LikeBookmarkActions from '../components/LikeBookmarkActions.jsx';
@@ -16,12 +16,23 @@ const fallbackImage = 'https://images.unsplash.com/photo-1518531933037-91b2f5f22
 
 export default function PostDetailsPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
   const { notify } = useNotifications();
   const { addPost } = useRecentlyViewedPosts();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  async function removePost() {
+    if (!window.confirm('Delete this post? This cannot be undone.')) return;
+    try {
+      await postService.remove(id);
+      navigate('/posts');
+    } catch (err) {
+      setError(getApiError(err, 'Unable to delete post.'));
+    }
+  }
 
   useEffect(() => {
     postService.getById(id)
@@ -68,6 +79,12 @@ export default function PostDetailsPage() {
                     <Button as={Link} variant="secondary" className="px-4 py-2" to={`/posts/${post.id}/edit`}>
                       <Edit3 className="h-4 w-4" />
                       Edit
+                    </Button>
+                  )}
+                  {isAdmin && (
+                    <Button type="button" variant="secondary" className="px-4 py-2" onClick={removePost}>
+                      <Trash2 className="h-4 w-4" />
+                      Delete
                     </Button>
                   )}
                 </div>

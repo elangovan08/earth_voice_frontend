@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { commentService } from '../services/commentService';
 import { getApiError, required } from '../utils/validators';
 import ErrorAlert from './ErrorAlert.jsx';
 import LoadingState from './LoadingState.jsx';
-
 export default function CommentSection({ postId, initialComments = [] }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAdmin, isAuthenticated } = useAuth();
   const [comments, setComments] = useState(initialComments);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,7 +49,7 @@ export default function CommentSection({ postId, initialComments = [] }) {
   }
 
   return (
-    <section className="section-panel p-4 mt-4">
+    <section id="comments" className="section-panel p-4 mt-4">
       <h2 className="h4 fw-bold mb-3">Comments</h2>
       <ErrorAlert message={error} />
       <form onSubmit={handleSubmit} className="mb-4">
@@ -74,6 +74,26 @@ export default function CommentSection({ postId, initialComments = [] }) {
                 <small className="text-muted-eco">{comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ''}</small>
               </div>
               <p className="mb-0">{comment.content}</p>
+              <div className="d-flex align-items-center gap-2">
+                {(isAdmin || user?.id === comment.user?.id) && (
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label="Delete comment"
+                    title="Delete comment"
+                    onClick={async () => {
+                      try {
+                        await commentService.remove(comment.id);
+                        setComments(current => current.filter(item => item.id !== comment.id));
+                      } catch (err) {
+                        setError(getApiError(err, 'Unable to delete comment.'));
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
